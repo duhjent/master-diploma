@@ -1,8 +1,8 @@
-from dataset import MTSDDataset, visualize
+from dataset import MTSDDetectionDataset, visualize
 from torchvision.transforms import v2 as transforms
 
 if __name__ == "__main__":
-    ds = MTSDDataset(
+    ds = MTSDDetectionDataset(
         "./data",
         "val",
         transform=transforms.Compose(

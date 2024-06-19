@@ -1,3 +1,3 @@
-from dataset import MTSDDataset
+from dataset import MTSDDetectionDataset
 
 

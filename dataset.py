@@ -25,7 +25,7 @@ splits_files = {
 }
 
 
-class MTSDDataset(Dataset):
+class MTSDDetectionDataset(Dataset):
     def __init__(
         self,
         base_path="./data",
@@ -122,6 +122,7 @@ class MTSDDataset(Dataset):
 
         image = Image.open(image_path)
 
+        objects = [obj for obj in annotations["objects"] if self.objects_filter(obj)]
         bboxes = [
             [
                 obj["bbox"]["xmin"],
@@ -129,15 +130,14 @@ class MTSDDataset(Dataset):
                 obj["bbox"]["xmax"],
                 obj["bbox"]["ymax"],
             ]
-            for obj in annotations["objects"]
-            if self.objects_filter(obj)
+            for obj in objects
         ]
         bboxes = tv_tensors.BoundingBoxes(
             bboxes, format="XYXY", canvas_size=(image.height, image.width)
         )
         label = {
             "boxes": bboxes,
-            "labels": [obj["label"] for obj in annotations["objects"]],
+            "labels": [obj["label"] for obj in objects],
             "id": id,
         }
 
@@ -153,20 +153,3 @@ def visualize(img, label, width=3):
     plt.imshow(transforms.functional.to_pil_image(img_with_bboxes))
     plt.axis("off")
     plt.show()
-
-
-# transform = transforms.Compose(
-#     [
-#         transforms.ToImage(),
-#         transforms.Resize((1024, 1024)),
-#     ]
-# )
-
-# ds = MTSDDataset(
-#     split="val",
-#     transform=transform,
-#     skip_validation=True,
-#     objects_filter=lambda obj: obj["label"] != "other-sign",
-# )
-# visualize(*ds[122], width=3)
-# print(len(ds))
