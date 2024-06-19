@@ -49,7 +49,7 @@ with torch.no_grad():
     i = 0
     fractalnet_model.eval()
     fractal_start_time = time.time()
-    for batch in tqdm(data_loader):
+    for batch in data_loader:
         res = fractalnet_model(batch)
         i += 1
         if i == 3:
@@ -61,7 +61,7 @@ with torch.no_grad():
     i = 0
     resnet_model.eval()
     resnet_start_time = time.time()
-    for batch in tqdm(data_loader):
+    for batch in data_loader:
         res = resnet_model(batch)
         i += 1
         if i == 3:
@@ -69,9 +69,3 @@ with torch.no_grad():
 
     resnet_end_time = time.time()
     print(f'ended resnet in {resnet_end_time - resnet_start_time}')
-
-# print(resnet_model)
-# print(fractalnet_model)
-
-
-

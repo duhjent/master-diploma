@@ -374,7 +374,7 @@ class ImageNetFractalNet(nn.Module):
         glob_num_columns = np.random.randint(0, self.num_columns, size=(glob_batch_size,))
 
         x = self.features(x, glob_num_columns=glob_num_columns)
-        x = x.view(x.size(0), -1)
+        x = x.view(x.size(0), x.size(1), -1)
         print(f'extracted features, size: {x.shape}')
         x = self.output(x)
         return x

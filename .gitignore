@@ -2,3 +2,4 @@ data/
 venv/
 imagenet/
 s3.yaml
+*.pyc

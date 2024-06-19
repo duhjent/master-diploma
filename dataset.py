@@ -27,12 +27,20 @@ splits_files = {
 
 class MTSDDataset(Dataset):
     def __init__(
-        self, base_path="./data", split="train", transform=None, skip_validation=False
+        self,
+        base_path="./data",
+        split="train",
+        transform=None,
+        skip_validation=False,
+        objects_filter=None,
     ):
         assert split in ["train", "test", "val"]
         self.base_path = base_path
         self.split = split
         self.transform = transform if transform is not None else transforms.ToTensor()
+        self.objects_filter = (
+            objects_filter if objects_filter is not None else lambda x: True
+        )
         if not skip_validation:
             self.__check_files()
         self.__load_ids()
@@ -67,10 +75,16 @@ class MTSDDataset(Dataset):
                 with ZipFile(f"{self.base_path}/{filename}", "r") as split_zip:
                     split_zip.extractall(f"{self.base_path}/{folder_name}")
 
+    def __load_annotation(self, id):
+        annotation_path = f"{self.base_path}/annotations/mtsd_v2_fully_annotated/annotations/{id}.json"
+        with open(annotation_path, "r") as f:
+            annotations = json.load(f)
+            return annotations
+
     def __getitem__(self, index) -> any:
         id = self.ids[index]
-        annotation_path = f"{self.base_path}/annotations/mtsd_v2_fully_annotated/annotations/{id}.json"
-        annotations = json.load(open(annotation_path, "r"))
+        annotations = self.__load_annotation(id)
+
         for folder in self.folders:
             image_path = f"{self.base_path}/{folder}/images/{id}.jpg"
             if path.exists(image_path):
@@ -86,7 +100,7 @@ class MTSDDataset(Dataset):
                 obj["bbox"]["ymax"],
             ]
             for obj in annotations["objects"]
-            if obj["label"] != "other-sign"
+            if self.objects_filter(obj)
         ]
         bboxes = tv_tensors.BoundingBoxes(
             bboxes, format="XYXY", canvas_size=(image.height, image.width)
@@ -103,8 +117,8 @@ class MTSDDataset(Dataset):
         return len(self.ids)
 
 
-def visualize(img, label):
-    img_with_bboxes = draw_bounding_boxes(img, label["boxes"], width=1)
+def visualize(img, label, width=3):
+    img_with_bboxes = draw_bounding_boxes(img, label["boxes"], width=width)
 
     plt.imshow(transforms.functional.to_pil_image(img_with_bboxes))
     plt.axis("off")
@@ -114,10 +128,15 @@ def visualize(img, label):
 # transform = transforms.Compose(
 #     [
 #         transforms.ToImage(),
-#         transforms.Resize((400, 400)),
+#         transforms.Resize((1024, 1024)),
 #     ]
 # )
 
-# ds = MTSDDataset(split="val", transform=transform, skip_validation=True)
-# visualize(*ds[1])
+# ds = MTSDDataset(
+#     split="val",
+#     transform=transform,
+#     skip_validation=True,
+#     objects_filter=lambda obj: obj["label"] != "other-sign",
+# )
+# visualize(*ds[122], width=3)
 # print(len(ds))
