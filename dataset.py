@@ -33,6 +33,7 @@ class MTSDDataset(Dataset):
         transform=None,
         skip_validation=False,
         objects_filter=None,
+        download=False,
     ):
         assert split in ["train", "test", "val"]
         self.base_path = base_path
@@ -41,22 +42,48 @@ class MTSDDataset(Dataset):
         self.objects_filter = (
             objects_filter if objects_filter is not None else lambda x: True
         )
-        if not skip_validation:
+        self.download = download
+        self.skip_validation = skip_validation
+        if self.download:
+            self.__download_files()
+
+        if not self.skip_validation and not self.download:
             self.__check_files()
         self.__load_ids()
         self.__extract_files()
 
+    def __check_file(self, filename):
+        checksum = checksums[filename]
+        with open(f"{self.base_path}/{filename}", "rb") as binary_file:
+            data = binary_file.read()
+            actual_checksum = hashlib.md5(data).hexdigest()
+            if actual_checksum != checksum:
+                raise Exception(f"File {filename} is incorrect!")
+
+    def __download_files(self):
+        import boto3
+        import yaml
+
+        with open("./s3.yaml", "r") as f:
+            config = yaml.safe_load(f)
+        session = boto3.session.Session()
+        client = session.client("s3", **config["s3"])
+
+        files_to_download = ["annotations.zip"] + splits_files[self.split]
+        for filename in files_to_download:
+            if not path.exists(f"{self.base_path}/{filename}"):
+                client.download_file("data", filename, f"{self.base_path}/{filename}")
+            elif not self.skip_validation:
+                self.__check_file(filename)
+
     def __check_files(self):
         files_to_check = ["annotations.zip"] + splits_files[self.split]
         for filename in files_to_check:
-            checksum = checksums[filename]
-            with open(f"{self.base_path}/{filename}", "rb") as binary_file:
-                data = binary_file.read()
-                actual_checksum = hashlib.md5(data).hexdigest()
-                if actual_checksum != checksum:
-                    raise Exception(f"File {filename} is incorrect!")
+            self.__check_file(filename)
 
     def __load_ids(self):
+        if not path.exists(f"{self.base_path}/annotations.zip"):
+            raise Exception("annotations.zip file not found")
         if not path.exists(f"{self.base_path}/annotations"):
             with ZipFile(f"{self.base_path}/annotations.zip", "r") as annotations_zip:
                 annotations_zip.extractall(f"{self.base_path}/annotations")
@@ -69,6 +96,9 @@ class MTSDDataset(Dataset):
     def __extract_files(self):
         self.folders = []
         for filename in splits_files[self.split]:
+            if not path.exists(f"{self.base_path}/{filename}"):
+                raise Exception(f"{filename} file not found")
+
             folder_name = filename.split(".")[0]
             self.folders.append(folder_name)
             if not path.exists(f"{self.base_path}/{folder_name}"):

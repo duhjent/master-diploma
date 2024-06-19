@@ -12,6 +12,7 @@ if __name__ == "__main__":
         ),
         skip_validation=True,
         objects_filter=lambda obj: obj["label"] != "other-sign",
+        download=True
     )
 
     visualize(*ds[0], width=5)
