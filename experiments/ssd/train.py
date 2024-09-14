@@ -118,9 +118,10 @@ def train():
 
     writer = SummaryWriter(comment=f'SSD-{args.dataset}')
 
-    ssd_net = build_ssd("train", cfg["min_dim"], cfg["num_classes"])
+    device = "cuda" if args.cuda else "cpu"
+
+    ssd_net = build_ssd("train", cfg["min_dim"], cfg["num_classes"], device=device)
     net = ssd_net
-    device = "cpu"
 
     if args.cuda:
         net = torch.nn.DataParallel(ssd_net)
