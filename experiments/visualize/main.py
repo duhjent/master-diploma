@@ -8,6 +8,8 @@ if __name__ == "__main__":
         transform=transforms.Compose(
             [
                 transforms.ToImage(),
+                # transforms.Resize((800, 800))
+                transforms.RandomCrop((800, 800))
             ]
         ),
         skip_validation=True,
@@ -15,4 +17,4 @@ if __name__ == "__main__":
         download=True
     )
 
-    visualize(*ds[0], width=5)
+    visualize(*ds[0], width=2)

@@ -8,6 +8,7 @@ from torchvision.transforms import v2 as transforms
 from torchvision import tv_tensors
 from torchvision.utils import draw_bounding_boxes
 import matplotlib.pyplot as plt
+import torch
 
 checksums = {
     "annotations.zip": "99394f7890112823880d14525c54467a",
@@ -23,6 +24,48 @@ splits_files = {
     "test": ["test.zip"],
     "val": ["val.zip"],
 }
+
+class GTSDBDetectionDatase(Dataset):
+    def __init__(self, base_path='./data', split='train', transform=None, download=False):
+        assert split in ['train', 'test']
+        self.base_path = base_path
+        self.split = split
+        self.transform = transform if transform is not None else transforms.ToTensor()
+        self.download = download
+        if self.download:
+            self.__download_files()
+
+        self.__load_ids()
+        self.__extract_files()
+
+    def __download_files(self):
+        import boto3
+        import yaml
+
+        with open("./s3.yaml", "r") as f:
+            config = yaml.safe_load(f)
+        session = boto3.session.Session()
+        client = session.client("s3", **config["s3"])
+
+        files_to_download = ["gt.txt", 'FullIJCNN2013.zip']
+        for filename in files_to_download:
+            if not path.exists(f"{self.base_path}/{filename}"):
+                client.download_file("gtsdb", filename, path.join(self.base_path, filename))
+
+    def __load_ids(self):
+        with open(
+            f"{self.base_path}/gt.txt",
+            "r",
+        ) as split_ids:
+            self.ids = [line[:-1] for line in split_ids.readlines()]
+
+    def __extract_files(self):
+        if not path.exists(f"{self.base_path}/FullIJCNN2013.zip"):
+            raise Exception(f"FullIJCNN2013.zip file not found")
+
+        if not path.exists(f"{self.base_path}/FullIJCNN2013"):
+            with ZipFile(f"{self.base_path}/FullIJCNN2013.zip", "r") as split_zip:
+                split_zip.extractall(f"{self.base_path}/FullIJCNN2013")
 
 
 class MTSDDetectionDataset(Dataset):
@@ -72,7 +115,7 @@ class MTSDDetectionDataset(Dataset):
         files_to_download = ["annotations.zip"] + splits_files[self.split]
         for filename in files_to_download:
             if not path.exists(f"{self.base_path}/{filename}"):
-                client.download_file("data", filename, f"{self.base_path}/{filename}")
+                client.download_file("data", filename, path.join(self.base_path, filename))
             elif not self.skip_validation:
                 self.__check_file(filename)
 
@@ -146,10 +189,24 @@ class MTSDDetectionDataset(Dataset):
     def __len__(self):
         return len(self.ids)
 
+class CocoWrapperDataset(Dataset):
+    def __init__(self, dataset):
+        self._dataset = dataset
+        self.name = 'DFG'
+
+    def __len__(self):
+        return len(self._dataset)
+
+    def __getitem__(self, idx):
+        img, tgt = self._dataset[idx]
+        return img, torch.cat((tgt['boxes']/300, tgt['labels'].unsqueeze(1)), dim=1)
+
 
 def visualize(img, label, width=3):
     img_with_bboxes = draw_bounding_boxes(img, label["boxes"], width=width)
 
+    plt.figure(figsize=(15, 15))
     plt.imshow(transforms.functional.to_pil_image(img_with_bboxes))
     plt.axis("off")
-    plt.show()
+    plt.savefig('./out.png', bbox_inches='tight', pad_inches=0)
+    # plt.show()
