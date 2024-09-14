@@ -67,9 +67,9 @@ class MultiBoxLoss(nn.Module):
         loc_t = torch.Tensor(num, num_priors, 4)
         conf_t = torch.LongTensor(num, num_priors)
         for idx in range(num):
-            truths = targets[idx][:, :-1].data
-            labels = targets[idx][:, -1].data
-            defaults = priors.data
+            truths = targets[idx][:, :-1]
+            labels = targets[idx][:, -1]
+            defaults = priors
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
 
@@ -112,7 +112,7 @@ class MultiBoxLoss(nn.Module):
 
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
 
-        N = num_pos.data.sum()
+        N = num_pos.sum()
         loss_l /= N
         loss_c /= N
         return loss_l, loss_c

@@ -54,7 +54,7 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
             x = x.cuda()
 
         y = net(x)      # forward pass
-        detections = y.data
+        detections = y
         # scale each detection back up to the image
         scale = torch.Tensor([img.shape[1], img.shape[0],
                              img.shape[1], img.shape[0]])
