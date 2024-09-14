@@ -108,9 +108,9 @@ def train():
                         [0.4649, 0.4758, 0.4479], [0.2797, 0.2809, 0.2897]
                     ),
                     transforms.Resize(300),
-                    # transforms.RandomIoUCrop(),
-                    transforms.RandomCrop(300),
-                    # transforms.Resize((300, 300)),
+                    transforms.RandomIoUCrop(),
+                    # transforms.RandomCrop(300),
+                    transforms.Resize((300, 300)),
                     transforms.SanitizeBoundingBoxes(),
                 ]
             ),

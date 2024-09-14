@@ -10,6 +10,12 @@
             "request": "launch",
             "module": "experiments.ssd.train",
             "args": ["--dataset=DFG", "--dataset_root=./data/dfg", "--cuda=False", "--batch_size=4"]
+        },
+        {
+            "name": "Debug dfg",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.initial.debug_dfg"
         }
     ]
 }
