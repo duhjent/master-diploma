@@ -69,18 +69,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-if torch.cuda.is_available():
-    if args.cuda:
-        torch.set_default_dtype("torch.cuda.FloatTensor")
-    else:
-        print(
-            "WARNING: It looks like you have a CUDA device, but aren't "
-            + "using CUDA.\nRun with --cuda for optimal training speed."
-        )
-        torch.set_default_dtype("torch.FloatTensor")
-else:
-    torch.set_default_dtype(torch.float)
-
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
