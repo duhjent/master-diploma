@@ -108,8 +108,9 @@ def train():
                         [0.4649, 0.4758, 0.4479], [0.2797, 0.2809, 0.2897]
                     ),
                     transforms.Resize(300),
-                    transforms.RandomIoUCrop(),
-                    transforms.Resize((300, 300)),
+                    # transforms.RandomIoUCrop(),
+                    transforms.RandomCrop(300),
+                    # transforms.Resize((300, 300)),
                     transforms.SanitizeBoundingBoxes(),
                 ]
             ),
@@ -177,10 +178,10 @@ def train():
         # pin_memory=True,
     )
     # create batch iterator
-    images, targets = next(iter(data_loader))
+    # images, targets = next(iter(data_loader))
     for epoch in range(args.num_epochs):
-        # for iteration, (images, targets) in enumerate(data_loader):
-        for iteration in range(1):
+        for iteration, (images, targets) in enumerate(data_loader):
+        # for iteration in range(1):
             if iteration in cfg["lr_steps"]:
                 step_index += 1
                 adjust_learning_rate(optimizer, args.gamma, step_index)
