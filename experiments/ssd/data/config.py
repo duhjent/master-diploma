@@ -42,7 +42,7 @@ coco = {
 }
 
 dfg = {
-    'num_classes': 200,
+    'num_classes': 201,
     'lr_steps': (),
     'max_iter': 400000,
     'feature_maps': [38, 19, 10, 5, 3, 1],
