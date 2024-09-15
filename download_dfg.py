@@ -18,11 +18,11 @@ session = boto3.session.Session()
 client = session.client("s3", **config["s3"])
 
 client.download_file("dfg", 'JPEGImages.tar.bz2', path.join('./data/dfg',  'JPEGImages.tar.bz2'))
-client.download_file("dfg", 'DFG-tsd-aug-annot-json.zip', path.join('./data/dfg',  'DFG-tsd-aug-annot-json.zip'))
+client.download_file("dfg", 'dfg-annot.zip', path.join('./data/dfg',  'dfg-annot.zip'))
 
 with tarfile.open('./data/dfg/JPEGImages.tar.bz2', 'r:bz2') as tar:
     tar.extractall()
 
 
-with ZipFile(f"./data/dfg/DFG-tsd-aug-annot-json.zip", "r") as annot_zip:
+with ZipFile(f"./data/dfg/dfg-annot.zip", "r") as annot_zip:
     annot_zip.extractall(f"./data/dfg")
