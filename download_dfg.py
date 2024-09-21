@@ -21,7 +21,7 @@ client.download_file("dfg", 'JPEGImages.tar.bz2', path.join('./data/dfg',  'JPEG
 client.download_file("dfg", 'dfg-annot.zip', path.join('./data/dfg',  'dfg-annot.zip'))
 
 with tarfile.open('./data/dfg/JPEGImages.tar.bz2', 'r:bz2') as tar:
-    tar.extractall()
+    tar.extractall('./data/dfg')
 
 
 with ZipFile(f"./data/dfg/dfg-annot.zip", "r") as annot_zip:

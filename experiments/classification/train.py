@@ -279,15 +279,12 @@ def main():
 
     global_iter = 0
 
-    # img, tgt = next(iter(train_dl))
-    # tgt = F.one_hot(tgt, 200).to(device).to(torch.float32)
     for epoch in tqdm(range(args.num_epochs), desc="epochs", position=0):
         model.train()
         running_loss = 0
         for iter_num, (img, tgt) in tqdm(
             enumerate(train_dl), desc="iterations", position=1, leave=False
         ):
-            # for iter_num in tqdm(range(2), desc='iterations', position=1, leave=False):
             img = img.to(device)
             tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
 
@@ -310,7 +307,7 @@ def main():
         with torch.no_grad():
             for iter_num, (img, tgt) in enumerate(val_dl):
                 img = img.to(device)
-                tgt = F.one_hot(tgt.to(device), 200)
+                tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
 
                 out = model(img)
                 loss = criterion(out, tgt)
