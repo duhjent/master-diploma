@@ -275,7 +275,7 @@ def main():
     val_dl = DataLoader(val_ds, batch_size=args.batch_size)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    criterion = nn.CrossEntropyLoss(class_weights)
+    criterion = nn.CrossEntropyLoss(class_weights.to(device))
 
     global_iter = 0
 
@@ -289,7 +289,7 @@ def main():
         ):
             # for iter_num in tqdm(range(2), desc='iterations', position=1, leave=False):
             img = img.to(device)
-            tgt = F.one_hot(tgt.to(device), 200).to(torch.float32)
+            tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
 
             optimizer.zero_grad()
             out = model(img)
