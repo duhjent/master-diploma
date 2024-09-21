@@ -283,7 +283,7 @@ def main():
         model.train()
         running_loss = 0
         for iter_num, (img, tgt) in tqdm(
-            enumerate(train_dl), desc="iterations", position=1, leave=False
+            enumerate(train_dl), desc="iterations", position=1, leave=False, total=len(train_dl)
         ):
             img = img.to(device)
             tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
