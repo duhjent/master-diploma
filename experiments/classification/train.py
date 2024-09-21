@@ -8,6 +8,7 @@ import argparse
 from tqdm import tqdm
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
+import os
 from os import path
 
 class_weights = torch.tensor(
@@ -240,15 +241,16 @@ def main():
         model = FractalNet(
             data_shape=(3, 64, 64, 200),
             n_columns=4,
-            init_channels=64,
+            init_channels=128,
             p_ldrop=0.15,
             dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
             gdrop_ratio=0.5,
-            # pad_type='reflect'
-            # doubling=True,
         ).to(device)
 
     writer = SummaryWriter(log_dir="runs", comment="classification")
+
+    if not path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
 
     print(args)
 
