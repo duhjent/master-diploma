@@ -9,13 +9,44 @@
             "type": "debugpy",
             "request": "launch",
             "module": "experiments.ssd.train",
-            "args": ["--dataset=DFG", "--dataset_root=./data/dfg", "--cuda=False", "--batch_size=4"]
+            "args": [
+                "--dataset=DFG",
+                "--dataset_root=./data/dfg",
+                "--cuda=False",
+                "--batch_size=4"
+            ]
         },
         {
             "name": "Debug dfg",
             "type": "debugpy",
             "request": "launch",
             "module": "experiments.initial.debug_dfg"
+        },
+        {
+            "name": "Debug tensorboard",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.initial.visualize_tb"
+        },
+        {
+            "name": "Debug classification",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.classification.train",
+            "args": [
+                "--img_path",
+                "./data/dfg/JPEGImages",
+                "--annot_path",
+                "./data/dfg/train.bak.json",
+                "--num_epochs",
+                "200",
+                "--batch_size",
+                "4",
+                "--lr",
+                "1e-3",
+                "--momentum",
+                ".9"
+            ]
         }
     ]
 }

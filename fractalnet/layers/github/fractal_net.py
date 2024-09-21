@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import numpy as np
-from fractal_block import FractalBlock
+from .fractal_block import FractalBlock
 
 class FractalNet(nn.Module):
     def __init__(self, data_shape, n_columns, init_channels, p_ldrop, dropout_probs,

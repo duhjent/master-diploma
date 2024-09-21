@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import numpy as np
-from conv_block import ConvBlock
+from .conv_block import ConvBlock
 
 class FractalBlock(nn.Module):
     def __init__(self, n_columns, C_in, C_out, p_ldrop, p_dropout, pad_type='zero',

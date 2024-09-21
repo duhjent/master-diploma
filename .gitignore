@@ -7,3 +7,6 @@ s3.yaml
 /runs/
 experiments/detr/
 experiments/sparse_detr/
+*.zip
+/runs-vast/
+/outs/
