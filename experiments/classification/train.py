@@ -8,6 +8,7 @@ import argparse
 from tqdm import tqdm
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
+from os import path
 
 class_weights = torch.tensor(
     [
@@ -239,10 +240,11 @@ def main():
         model = FractalNet(
             data_shape=(3, 64, 64, 200),
             n_columns=4,
-            init_channels=128,
+            init_channels=64,
             p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3],
+            dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
             gdrop_ratio=0.5,
+            # pad_type='reflect'
             # doubling=True,
         ).to(device)
 
@@ -255,6 +257,7 @@ def main():
         args.annot_path,
         transform=transforms.Compose(
             [
+                transforms.ToImage(),
                 transforms.ToDtype(torch.float32, scale=True),
                 transforms.Normalize(
                     [0.4397, 0.4331, 0.4526], [0.2677, 0.2707, 0.2906]
@@ -272,35 +275,32 @@ def main():
     val_dl = DataLoader(val_ds, batch_size=args.batch_size)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    # criterion = nn.CrossEntropyLoss(class_weights)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(class_weights)
 
     global_iter = 0
 
-    for epoch in range(args.num_epochs):
+    # img, tgt = next(iter(train_dl))
+    # tgt = F.one_hot(tgt, 200).to(device).to(torch.float32)
+    for epoch in tqdm(range(args.num_epochs), desc="epochs", position=0):
         model.train()
         running_loss = 0
-        img, tgt = next(iter(train_dl))
-        tgt = F.one_hot(tgt.to(device), 200).to(torch.float32)
-        # for iter, (img, tgt) in enumerate(train_dl):
-        for iter_num in range(1):
+        for iter_num, (img, tgt) in tqdm(
+            enumerate(train_dl), desc="iterations", position=1, leave=False
+        ):
+            # for iter_num in tqdm(range(2), desc='iterations', position=1, leave=False):
             img = img.to(device)
-            # tgt = F.one_hot(tgt.to(device), 200).to(torch.float32)
+            tgt = F.one_hot(tgt.to(device), 200).to(torch.float32)
 
+            optimizer.zero_grad()
             out = model(img)
 
             loss = criterion(out, tgt)
-            optimizer.zero_grad()
             loss.backward()
-
             optimizer.step()
 
             running_loss += loss.item()
-            print(loss.item())
             writer.add_scalar("ImmediateLoss/train", loss.item(), global_iter)
             global_iter += 1
-
-        continue
 
         epoch_loss = running_loss / (iter_num + 1)
         writer.add_scalar("Loss/train", epoch_loss, epoch)
@@ -317,6 +317,7 @@ def main():
                 val_running_loss = loss.item()
 
         writer.add_scalar("Loss/val", val_running_loss / (iter_num + 1), epoch)
+        torch.save(model.state_dict(), path.join(args.out_dir, f"{args.model}.pth"))
 
 
 if __name__ == "__main__":
