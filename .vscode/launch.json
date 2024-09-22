@@ -47,6 +47,22 @@
                 "--momentum",
                 ".9"
             ]
+        },
+        {
+            "name": "Debug classification metrics",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.classification.metrics",
+            "args": [
+                "--img_path",
+                "./data/dfg/JPEGImages",
+                "--annot_path",
+                "./data/dfg/test.json",
+                "--weight_path",
+                "./weights/fractal.pth",
+                "--batch_size",
+                "2",
+            ]
         }
     ]
 }
