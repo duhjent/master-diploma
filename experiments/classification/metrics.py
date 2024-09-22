@@ -24,6 +24,7 @@ parser.add_argument("--cuda", action="store_true")
 parser.add_argument("--batch_size", type=int, required=True)
 parser.add_argument("--num_workers", type=int, default=0)
 parser.add_argument('--out_path', type=str, required=True)
+parser.add_argument('--comment', type=str, required=True)
 
 args = parser.parse_args()
 
@@ -40,7 +41,7 @@ def main():
             n_columns=4,
             init_channels=128,
             p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
+            dropout_probs=[0, 0.1, 0.2, 0.3],
             gdrop_ratio=0.5,
         ).to(device)
     elif args.model == "vgg":
@@ -93,7 +94,7 @@ def main():
         'confusion_matrix': matrix,
         'precision': precision,
         'recall': recall
-    }, path.join(args.out_path, f'metrics-{args.model}.pth'))
+    }, path.join(args.out_path, f'metrics-{args.comment}.pth'))
 
 
 if __name__ == "__main__":

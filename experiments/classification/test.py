@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 def main():
-    metrics = torch.load('./outs/metrics.pth')
+    metrics = torch.load('./outs/metrics-vgg.pth')
     print(metrics)
 
 if __name__ == "__main__":
