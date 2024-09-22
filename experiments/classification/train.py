@@ -10,6 +10,8 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 import os
 from os import path
+from torch.optim.lr_scheduler import MultiStepLR
+from torchvision.models import vgg16
 
 class_weights = torch.tensor(
     [
@@ -230,6 +232,7 @@ parser.add_argument("--cuda", action="store_true")
 parser.add_argument("--out_dir", type=str, default="./weights")
 parser.add_argument("--train_ratio", type=float, default=0.8)
 parser.add_argument("--val_ratio", type=float, default=0.2)
+parser.add_argument("--comment", type=str, default="classification")
 
 args = parser.parse_args()
 
@@ -243,11 +246,13 @@ def main():
             n_columns=4,
             init_channels=128,
             p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
+            dropout_probs=[0, 0.1, 0.2, 0.3],
             gdrop_ratio=0.5,
         ).to(device)
+    elif args.model == "vgg":
+        model = vgg16(num_classes=200)
 
-    writer = SummaryWriter(log_dir="runs", comment="classification")
+    writer = SummaryWriter(log_dir="runs", comment=args.comment)
 
     if not path.exists(args.out_dir):
         os.mkdir(args.out_dir)
@@ -279,11 +284,19 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     criterion = nn.CrossEntropyLoss(class_weights.to(device))
 
+    # if args.model == 'fractal':
+    scheduler = MultiStepLR(optimizer, [50, 65], 0.1)
+
     global_iter = 0
 
+    # img, tgt = next(iter(train_dl))
+    # img = img.to(device)
+    # tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
     for epoch in tqdm(range(args.num_epochs), desc="epochs", position=0):
+    # for epoch in range(args.num_epochs):
         model.train()
         running_loss = 0
+        # for iter_num in range(1):
         for iter_num, (img, tgt) in tqdm(
             enumerate(train_dl), desc="iterations", position=1, leave=False, total=len(train_dl)
         ):
@@ -316,7 +329,11 @@ def main():
                 val_running_loss = loss.item()
 
         writer.add_scalar("Loss/val", val_running_loss / (iter_num + 1), epoch)
-        torch.save(model.state_dict(), path.join(args.out_dir, f"{args.model}.pth"))
+        torch.save(
+            model.state_dict(),
+            path.join(args.out_dir, f"{args.model}-{args.comment}.pth"),
+        )
+        scheduler.step()
 
 
 if __name__ == "__main__":

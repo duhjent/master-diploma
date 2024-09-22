@@ -32,20 +32,8 @@
             "name": "Debug classification",
             "type": "debugpy",
             "request": "launch",
-            "module": "experiments.classification.train",
+            "module": "experiments.classification.test",
             "args": [
-                "--img_path",
-                "./data/dfg/JPEGImages",
-                "--annot_path",
-                "./data/dfg/train.bak.json",
-                "--num_epochs",
-                "200",
-                "--batch_size",
-                "4",
-                "--lr",
-                "1e-3",
-                "--momentum",
-                ".9"
             ]
         },
         {

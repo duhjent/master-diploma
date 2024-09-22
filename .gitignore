@@ -9,4 +9,5 @@ experiments/detr/
 experiments/sparse_detr/
 *.zip
 /runs-vast/
+/runs-fractal/
 /outs/

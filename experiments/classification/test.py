@@ -1,21 +1,12 @@
-import json
-import numpy as np
+from experiments.classification.data import DFGClassification
+from torchvision.transforms import v2 as transforms
+import torch
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 def main():
-    with open('./data/dfg/train.bak.json', 'r') as annot_file:
-        annotations = json.load(annot_file)
-
-    cnts = [0] * 200
-    total = 0
-
-    for annot in annotations['annotations']:
-        if annot['area'] == 1:
-            continue
-        cnts[int(annot['category_id'])] += 1
-        total += 1
-
-    print(np.array(total / (np.array(cnts) * 200)))
-
+    metrics = torch.load('./outs/metrics.pth')
+    print(metrics)
 
 if __name__ == "__main__":
     main()
