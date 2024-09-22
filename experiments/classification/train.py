@@ -250,7 +250,7 @@ def main():
             gdrop_ratio=0.5,
         ).to(device)
     elif args.model == "vgg":
-        model = vgg16(num_classes=200)
+        model = vgg16(num_classes=200).to(device)
 
     writer = SummaryWriter(log_dir="runs", comment=args.comment)
 
