@@ -219,6 +219,9 @@ class_weights = torch.tensor(
     dtype=torch.float32,
 )
 
+def parse_array(s: str) -> list[int]:
+    return [int(x) for x in s.split(',')]
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--img_path", type=str, required=True)
 parser.add_argument("--annot_path", type=str, required=True)
@@ -233,6 +236,10 @@ parser.add_argument("--out_dir", type=str, default="./weights")
 parser.add_argument("--train_ratio", type=float, default=0.8)
 parser.add_argument("--val_ratio", type=float, default=0.2)
 parser.add_argument("--comment", type=str, default="classification")
+parser.add_argument("--continue_train", action="store_true")
+parser.add_argument("--weights_file", type=str)
+parser.add_argument("--lr_schedule", type=parse_array, default=[50, 65])
+parser.add_argument("--start_epoch", type=int, default=0)
 
 args = parser.parse_args()
 
@@ -246,11 +253,15 @@ def main():
             n_columns=4,
             init_channels=128,
             p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3],
+            dropout_probs=[0, 0.1, 0.2, 0.3, .4],
             gdrop_ratio=0.5,
         ).to(device)
     elif args.model == "vgg":
         model = vgg16(num_classes=200).to(device)
+
+    if args.continue_train:
+        assert args.weights_file is not None
+        model.load_state_dict(torch.load(path.join(args.out_dir, args.weights_file), map_location=device))
 
     writer = SummaryWriter(log_dir="runs", comment=args.comment)
 
@@ -279,20 +290,21 @@ def main():
     train_dl = DataLoader(
         train_ds, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True
     )
-    val_dl = DataLoader(val_ds, batch_size=args.batch_size)
+    val_dl = DataLoader(val_ds, batch_size=args.batch_size, num_workers=args.num_workers)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    # TODO: fix it
+    optimizer.param_groups[0]['initial_lr'] = 1e-3
     criterion = nn.CrossEntropyLoss(class_weights.to(device))
 
-    # if args.model == 'fractal':
-    scheduler = MultiStepLR(optimizer, [50, 65], 0.1)
+    scheduler = MultiStepLR(optimizer, args.lr_schedule, 0.1, last_epoch=args.start_epoch)
 
     global_iter = 0
 
     # img, tgt = next(iter(train_dl))
     # img = img.to(device)
     # tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
-    for epoch in tqdm(range(args.num_epochs), desc="epochs", position=0):
+    for epoch in tqdm(range(args.start_epoch, args.num_epochs), desc="epochs", position=0):
     # for epoch in range(args.num_epochs):
         model.train()
         running_loss = 0

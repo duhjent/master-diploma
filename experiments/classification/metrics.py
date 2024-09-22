@@ -10,7 +10,12 @@ from torchvision.transforms import v2 as transforms
 from experiments.classification.data import DFGClassification
 from fractalnet.layers.github.fractal_net import FractalNet
 
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+)
 import os
 from os import path
 from tqdm import tqdm
@@ -23,8 +28,8 @@ parser.add_argument("--weight_path", type=str, required=True)
 parser.add_argument("--cuda", action="store_true")
 parser.add_argument("--batch_size", type=int, required=True)
 parser.add_argument("--num_workers", type=int, default=0)
-parser.add_argument('--out_path', type=str, required=True)
-parser.add_argument('--comment', type=str, required=True)
+parser.add_argument("--out_path", type=str, required=True)
+parser.add_argument("--comment", type=str, required=True)
 
 args = parser.parse_args()
 
@@ -41,7 +46,7 @@ def main():
             n_columns=4,
             init_channels=128,
             p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3],
+            dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
             gdrop_ratio=0.5,
         ).to(device)
     elif args.model == "vgg":
@@ -86,15 +91,18 @@ def main():
     tgts = np.vstack(tgts)
     accuracy = accuracy_score(tgts.argmax(1), outs.argmax(1))
     matrix = confusion_matrix(tgts.argmax(1), outs.argmax(1))
-    precision = precision_score(tgts.argmax(1), outs.argmax(1), average='micro')
-    recall = recall_score(tgts.argmax(1), outs.argmax(1), average='micro')
+    precision = precision_score(tgts.argmax(1), outs.argmax(1), average="micro")
+    recall = recall_score(tgts.argmax(1), outs.argmax(1), average="micro")
 
-    torch.save({
-        'accuracy': accuracy,
-        'confusion_matrix': matrix,
-        'precision': precision,
-        'recall': recall
-    }, path.join(args.out_path, f'metrics-{args.comment}.pth'))
+    torch.save(
+        {
+            "accuracy": accuracy,
+            "confusion_matrix": matrix,
+            "precision": precision,
+            "recall": recall,
+        },
+        path.join(args.out_path, f"metrics-{args.comment}.pth"),
+    )
 
 
 if __name__ == "__main__":
