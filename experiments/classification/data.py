@@ -22,7 +22,7 @@ class DFGClassification(Dataset):
                 "bbox": annot["bbox"],
             }
             for annot in metadata["annotations"]
-            if annot['area'] != 1
+            if annot['area'] != 1 and annot['bbox'][2] > 0 and annot['bbox'][3] > 0
         ]
 
         self.tranform = transform
