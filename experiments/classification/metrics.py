@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
 import numpy as np
+from torchvision.models import vgg16
 
 from torchvision.transforms import v2 as transforms
 
@@ -42,6 +43,8 @@ def main():
             dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
             gdrop_ratio=0.5,
         ).to(device)
+    elif args.model == "vgg":
+        model = vgg16(num_classes=200).to(device)
 
     model.load_state_dict(torch.load(args.weight_path, map_location=device))
 
@@ -90,7 +93,7 @@ def main():
         'confusion_matrix': matrix,
         'precision': precision,
         'recall': recall
-    }, path.join(args.out_path, 'metrics.pth'))
+    }, path.join(args.out_path, f'metrics-{args.model}.pth'))
 
 
 if __name__ == "__main__":
