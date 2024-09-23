@@ -8,6 +8,7 @@ from torchvision.models import vgg16
 from torchvision.transforms import v2 as transforms
 
 from experiments.classification.data import DFGClassification
+from experiments.classification.model import create_fractalnet, create_vgg16
 from fractalnet.layers.github.fractal_net import FractalNet
 
 from sklearn.metrics import (
@@ -41,16 +42,9 @@ def main():
     device = "cuda" if args.cuda else "cpu"
 
     if args.model == "fractal":
-        model = FractalNet(
-            data_shape=(3, 64, 64, 200),
-            n_columns=4,
-            init_channels=128,
-            p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3, 0.4],
-            gdrop_ratio=0.5,
-        ).to(device)
+        model = create_fractalnet().to(device)
     elif args.model == "vgg":
-        model = vgg16(num_classes=200).to(device)
+        model = create_vgg16().to(device)
 
     model.load_state_dict(torch.load(args.weight_path, map_location=device))
 

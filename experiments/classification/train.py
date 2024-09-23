@@ -1,3 +1,4 @@
+from experiments.classification.model import create_fractalnet, create_vgg16
 from fractalnet.layers.github.fractal_net import FractalNet
 import torch
 from torchvision.transforms import v2 as transforms
@@ -248,22 +249,15 @@ def main():
     device = "cuda" if args.cuda else "cpu"
 
     if args.model == "fractal":
-        model = FractalNet(
-            data_shape=(3, 64, 64, 200),
-            n_columns=4,
-            init_channels=128,
-            p_ldrop=0.15,
-            dropout_probs=[0, 0.1, 0.2, 0.3, .4],
-            gdrop_ratio=0.5,
-        ).to(device)
+        model = create_fractalnet().to(device)
     elif args.model == "vgg":
-        model = vgg16(num_classes=200).to(device)
+        model = create_vgg16().to(device)
 
     if args.continue_train:
         assert args.weights_file is not None
         model.load_state_dict(torch.load(path.join(args.out_dir, args.weights_file), map_location=device))
 
-    writer = SummaryWriter(log_dir="runs", comment=args.comment)
+    writer = SummaryWriter(comment=args.comment)
 
     if not path.exists(args.out_dir):
         os.mkdir(args.out_dir)
