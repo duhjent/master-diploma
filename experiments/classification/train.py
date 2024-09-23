@@ -220,8 +220,10 @@ class_weights = torch.tensor(
     dtype=torch.float32,
 )
 
+
 def parse_array(s: str) -> list[int]:
-    return [int(x) for x in s.split(',')]
+    return [int(x) for x in s.split(",")]
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--img_path", type=str, required=True)
@@ -255,8 +257,10 @@ def main():
 
     if args.continue_train:
         assert args.weights_file is not None
-        weights = torch.load(path.join(args.out_dir, args.weights_file), map_location=device)
-        model.load_state_dict(weights['model'])
+        weights = torch.load(
+            path.join(args.out_dir, args.weights_file), map_location=device
+        )
+        model.load_state_dict(weights["model"])
 
     writer = SummaryWriter(comment=args.comment)
 
@@ -285,27 +289,40 @@ def main():
     train_dl = DataLoader(
         train_ds, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True
     )
-    val_dl = DataLoader(val_ds, batch_size=args.batch_size, num_workers=args.num_workers)
+    val_dl = DataLoader(
+        val_ds, batch_size=args.batch_size, num_workers=args.num_workers
+    )
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     if args.continue_train:
-        optimizer.load_state_dict(weights['optimizer'])
+        optimizer.load_state_dict(weights["optimizer"])
     criterion = nn.CrossEntropyLoss(class_weights.to(device))
 
-    scheduler = MultiStepLR(optimizer, args.lr_schedule, 0.1, last_epoch=args.start_epoch)
+    scheduler = MultiStepLR(
+        optimizer,
+        args.lr_schedule,
+        0.1,
+        last_epoch=args.start_epoch if args.continue_train else -1,
+    )
 
     global_iter = 0
 
     # img, tgt = next(iter(train_dl))
     # img = img.to(device)
     # tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
-    for epoch in tqdm(range(args.start_epoch, args.num_epochs), desc="epochs", position=0):
-    # for epoch in range(args.num_epochs):
+    for epoch in tqdm(
+        range(args.start_epoch, args.num_epochs), desc="epochs", position=0
+    ):
+        # for epoch in range(args.num_epochs):
         model.train()
         running_loss = 0
         # for iter_num in range(1):
         for iter_num, (img, tgt) in tqdm(
-            enumerate(train_dl), desc="iterations", position=1, leave=False, total=len(train_dl)
+            enumerate(train_dl),
+            desc="iterations",
+            position=1,
+            leave=False,
+            total=len(train_dl),
         ):
             img = img.to(device)
             tgt = F.one_hot(tgt, 200).to(torch.float32).to(device)
@@ -337,7 +354,7 @@ def main():
 
         writer.add_scalar("Loss/val", val_running_loss / (iter_num + 1), epoch)
         torch.save(
-            {'model': model.state_dict(), 'optimizer': optimizer.state_dict()},
+            {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
             path.join(args.out_dir, f"{args.model}-{args.comment}.pth"),
         )
         scheduler.step()
