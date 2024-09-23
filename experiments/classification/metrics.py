@@ -46,7 +46,7 @@ def main():
     elif args.model == "vgg":
         model = create_vgg16().to(device)
 
-    model.load_state_dict(torch.load(args.weight_path, map_location=device))
+    model.load_state_dict(torch.load(args.weight_path, map_location=device)['model'])
 
     dataset = DFGClassification(
         args.img_path,
