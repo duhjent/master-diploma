@@ -255,7 +255,8 @@ def main():
 
     if args.continue_train:
         assert args.weights_file is not None
-        model.load_state_dict(torch.load(path.join(args.out_dir, args.weights_file), map_location=device))
+        weights = torch.load(path.join(args.out_dir, args.weights_file), map_location=device)
+        model.load_state_dict(weights['model'])
 
     writer = SummaryWriter(comment=args.comment)
 
@@ -287,8 +288,8 @@ def main():
     val_dl = DataLoader(val_ds, batch_size=args.batch_size, num_workers=args.num_workers)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    # TODO: fix it
-    optimizer.param_groups[0]['initial_lr'] = 1e-3
+    if args.continue_train:
+        optimizer.load_state_dict(weights['optimizer'])
     criterion = nn.CrossEntropyLoss(class_weights.to(device))
 
     scheduler = MultiStepLR(optimizer, args.lr_schedule, 0.1, last_epoch=args.start_epoch)
@@ -336,7 +337,7 @@ def main():
 
         writer.add_scalar("Loss/val", val_running_loss / (iter_num + 1), epoch)
         torch.save(
-            model.state_dict(),
+            {'model': model.state_dict(), 'optimizer': optimizer.state_dict()},
             path.join(args.out_dir, f"{args.model}-{args.comment}.pth"),
         )
         scheduler.step()
