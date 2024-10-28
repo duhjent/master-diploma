@@ -99,8 +99,8 @@ class FractalBlock(nn.Module):
             - outs: the outputs to join
             - global_cols: global drop path columns
         """
-        n_cols = len(outs)
-        out = torch.stack(outs) # [n_cols, B, C, H, W]
+        n_cols = outs.size(0)
+        out = outs
 
         if self.training:
             mask = self.drop_mask(out.size(1), global_cols, n_cols).to(out.device) # [n_cols, B]
@@ -123,13 +123,15 @@ class FractalBlock(nn.Module):
         for i in range(self.max_depth):
             st = self.n_columns - self.count[i]
             cur_outs = [] # outs of current depth
+            n_cols = self.n_columns - st
+            cur_outs = torch.zeros((n_cols, x.size(0), self.columns[-1][i].conv.out_channels, x.size(2), x.size(3)))
             if deepest:
                 st = self.n_columns - 1 # last column only
 
-            for c in range(st, self.n_columns):
+            for col_idx, c in enumerate(range(st, self.n_columns)):
                 cur_in = outs[c] # current input
                 cur_module = self.columns[c][i] # current module
-                cur_outs.append(cur_module(cur_in))
+                cur_outs[col_idx] = cur_module(cur_in)
 
             # join
             #print("join in depth = {}, # of in_join = {}".format(i, len(cur_out)))
