@@ -61,16 +61,19 @@ class FractalNet(nn.Module):
 
         print("Last featuremap size = {}".format(size))
         print("Total layers = {}".format(total_layers))
+        
+        classification_head = []
 
         if gap == 2:
-            layers.append(nn.Conv2d(C_out, n_classes, 1, padding=0)) # 1x1 conv
-            layers.append(nn.AdaptiveAvgPool2d(1)) # gap
-            layers.append(nn.Flatten())
+            classification_head.append(nn.Conv2d(C_out, n_classes, 1, padding=0)) # 1x1 conv
+            classification_head.append(nn.AdaptiveAvgPool2d(1)) # gap
+            classification_head.append(nn.Flatten())
         else:
-            layers.append(nn.Flatten())
-            layers.append(nn.Linear(C_out * size * size, n_classes)) # fc layer
+            classification_head.append(nn.Flatten())
+            classification_head.append(nn.Linear(C_out * size * size, n_classes)) # fc layer
 
         self.layers = layers
+        self.classification_head = nn.Sequential(*classification_head)
 
         # initialization
         if init != 'torch':
@@ -88,13 +91,14 @@ class FractalNet(nn.Module):
                     else:
                         nn.init.zeros_(p)
 
-    def forward(self, x, deepest=False):
+    def forward(self, x, deepest=False, features_only=False):
         if deepest:
             assert self.training is False
         GB = int(x.size(0) * self.gdrop_ratio) # number of samples to be dropped out via global drop-path
         out = x
         global_cols = None
-        for layer in self.layers:
+        layers = self.layers[:-1] if features_only else self.layers
+        for layer in layers:
             if isinstance(layer, FractalBlock):
                 if not self.consist_gdrop or global_cols is None:
                     global_cols = np.random.randint(0, self.n_columns, size=[GB]) # the column to use for each global drop-path
@@ -102,5 +106,8 @@ class FractalNet(nn.Module):
                 out = layer(out, global_cols, deepest=deepest)
             else:
                 out = layer(out)
+
+        if not features_only:
+            out = self.classification_head(out)
 
         return out

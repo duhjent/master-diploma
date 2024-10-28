@@ -31,8 +31,7 @@ class MultiBoxLoss(nn.Module):
     """
 
     def __init__(self, num_classes, overlap_thresh, prior_for_matching,
-                 bkg_label, neg_mining, neg_pos, neg_overlap, encode_target,
-                 device):
+                 bkg_label, neg_mining, neg_pos, neg_overlap, encode_target, device):
         super(MultiBoxLoss, self).__init__()
         self.device = device
         self.num_classes = num_classes
@@ -61,20 +60,16 @@ class MultiBoxLoss(nn.Module):
         num = loc_data.size(0)
         priors = priors[:loc_data.size(1), :]
         num_priors = (priors.size(0))
-        num_classes = self.num_classes
 
         # match priors (default boxes) and ground truth boxes
-        loc_t = torch.Tensor(num, num_priors, 4)
-        conf_t = torch.LongTensor(num, num_priors)
+        loc_t = torch.zeros((num, num_priors, 4), device=self.device)
+        conf_t = torch.zeros((num, num_priors), dtype=torch.int64, device=self.device)
         for idx in range(num):
             truths = targets[idx][:, :-1]
             labels = targets[idx][:, -1]
             defaults = priors
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
-
-        loc_t = loc_t.to(self.device)
-        conf_t = conf_t.to(self.device)
 
         # wrap targets
         loc_t = Variable(loc_t, requires_grad=False)

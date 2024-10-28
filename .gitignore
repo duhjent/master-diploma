@@ -1,5 +1,6 @@
 /data/
 venv/
+venv-linux/
 imagenet/
 s3.yaml
 *.pyc
@@ -7,6 +8,7 @@ s3.yaml
 /runs/
 experiments/detr/
 experiments/sparse_detr/
+experiments/ssd_nvidia/
 *.zip
 /runs-vast/
 /runs-fractal/

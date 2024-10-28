@@ -1,7 +1,7 @@
 from experiments.ssd.data import *
 from experiments.ssd.utils.augmentations import SSDAugmentation
 from experiments.ssd.layers.modules import MultiBoxLoss
-from experiments.ssd.ssd import build_ssd
+from experiments.ssd.ssd import build_ssd, build_ssd_fractal
 import os
 import time
 import torch
@@ -32,7 +32,7 @@ parser.add_argument(
     "--dataset_root", default=VOC_ROOT, help="Dataset root directory path"
 )
 parser.add_argument(
-    "--basenet", default="vgg16_reducedfc.pth", help="Pretrained base model"
+    "--basenet", default=None, type=str, help="Pretrained base model"
 )
 parser.add_argument("--num_epochs", default=100, type=int, help="Number of epochs")
 parser.add_argument(
@@ -66,6 +66,8 @@ parser.add_argument("--gamma", default=0.1, type=float, help="Gamma update for S
 parser.add_argument(
     "--save_folder", default="weights/", help="Directory for saving checkpoint models"
 )
+parser.add_argument("--model", default="vgg", choices=["vgg", "fractalnet"], type=str, help="vgg or fractalnet backbone")
+parser.add_argument("--comment", type=str, help="TensorBoard comment for run")
 args = parser.parse_args()
 
 
@@ -107,9 +109,7 @@ def train():
                     transforms.Normalize(
                         [0.4649, 0.4758, 0.4479], [0.2797, 0.2809, 0.2897]
                     ),
-                    transforms.Resize(300),
                     transforms.RandomIoUCrop(sampler_options=[0.1, 0.3, 0.5, 0.7, 0.9, 1.0]),
-                    # transforms.RandomCrop(300),
                     transforms.Resize((300, 300)),
                     transforms.SanitizeBoundingBoxes(),
                 ]
@@ -117,22 +117,24 @@ def train():
         ), target_keys=('boxes', 'labels')))
         cfg = dfg
 
-    writer = SummaryWriter(comment=f'SSD-{args.dataset}')
+    writer = SummaryWriter(comment=args.comment)
 
     device = "cuda" if args.cuda else "cpu"
 
-    ssd_net = build_ssd("train", cfg["min_dim"], cfg["num_classes"], device=device)
+    if args.model == 'vgg':
+        ssd_net = build_ssd("train", cfg, cfg["min_dim"], cfg["num_classes"])
+    elif args.model == 'fractalnet':
+        ssd_net = build_ssd_fractal("train", cfg, cfg["min_dim"], cfg["num_classes"])
     net = ssd_net
 
     if args.cuda:
-        net = torch.nn.DataParallel(ssd_net)
         device = "cuda"
         cudnn.benchmark = True
 
-    if args.resume:
+    if args.resume is not None:
         print("Resuming training, loading {}...".format(args.resume))
         ssd_net.load_weights(args.resume)
-    else:
+    elif args.basenet is not None:
         vgg_weights = torch.load(args.save_folder + args.basenet)
         print("Loading base network...")
         ssd_net.vgg.load_state_dict(vgg_weights)
@@ -154,7 +156,7 @@ def train():
     )
     criterion = MultiBoxLoss(
         cfg["num_classes"], 0.5, True, 0, True, 3, 0.5, False, device
-    )
+    ).to(device)
 
     net.train()
     # loss counters
@@ -240,7 +242,8 @@ def xavier(param):
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
         xavier(m.weight.data)
-        m.bias.data.zero_()
+        if m.bias is not None:
+            m.bias.data.zero_()
 
 
 if __name__ == "__main__":

@@ -12,8 +12,11 @@
             "args": [
                 "--dataset=DFG",
                 "--dataset_root=./data/dfg",
+                "--model=fractalnet",
                 "--cuda=False",
-                "--batch_size=4"
+                "--batch_size=2",
+                "--num_epochs=10",
+                "--comment=ssd_fractalnet_first_trial",
             ]
         },
         {
@@ -35,6 +38,12 @@
             "module": "experiments.classification.test",
             "args": [
             ]
+        },
+        {
+            "name": "Debug main",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.initial.main"
         },
         {
             "name": "Debug classification metrics",

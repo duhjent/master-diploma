@@ -2,14 +2,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pd.read_csv('./outs/run-Sep15_19-46-04_606d7b92c104SSD-DFG-tag-Loss_train.csv')
+df_train = pd.read_csv('./outs/vgg50epochs-loss_train.csv')
+df_val = pd.read_csv('./outs/vgg50epochs-loss_val.csv')
 
-df['epoch'] = df['Step'].apply(lambda x: int(x / 437))
+df = df_train.join(df_val, 'Step', lsuffix='train', rsuffix='val')
 
-losses = df.groupby('epoch')['Value'].mean()
-print(losses)
+plt.plot(df['Steptrain'], df['Valuetrain'], label='train')
+plt.plot(df['Stepval'], df['Valueval'], label='val')
 
-plt.plot(losses, label='train')
-plt.plot(losses + 0.17 + np.random.normal(0, 0.07, losses.shape), label='val')
+plt.xlabel('Epoch')
+plt.ylabel('Cross-entropy loss')
 plt.legend()
+
+plt.savefig('./outs/vgg50epochs-curve.png')
+
 plt.show()
+
+df_train = pd.read_csv('./outs/fractalsmaller200epochs-loss_train.csv')
+df_val = pd.read_csv('./outs/fractalsmaller200epochs-loss_val.csv')
+
+df = df_train.join(df_val, 'Step', lsuffix='train', rsuffix='val')
+
+plt.plot(df['Steptrain'], df['Valuetrain'], label='train')
+plt.plot(df['Stepval'], df['Valueval'], label='val')
+
+plt.xlabel('Epoch')
+plt.ylabel('Cross-entropy loss')
+plt.legend()
+
+plt.savefig('./outs/fractalsmaller200epochs-curve.png')
