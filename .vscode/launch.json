@@ -20,30 +20,10 @@
             ]
         },
         {
-            "name": "Debug dfg",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "experiments.initial.debug_dfg"
-        },
-        {
-            "name": "Debug tensorboard",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "experiments.initial.visualize_tb"
-        },
-        {
-            "name": "Debug classification",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "experiments.classification.test",
-            "args": [
-            ]
-        },
-        {
             "name": "Debug main",
             "type": "debugpy",
             "request": "launch",
-            "module": "experiments.initial.main"
+            "module": "experiments.initial.debug_fractal"
         },
         {
             "name": "Debug classification metrics",

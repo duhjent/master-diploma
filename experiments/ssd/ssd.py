@@ -311,7 +311,7 @@ def build_ssd_fractal(phase, cfg, size=300, num_classes=21):
     assert size == 300, 'Only size 300 is supported now'
     channels = [256, 512, 512, 256, 256, 128]
 
-    base_ = FractalNet((3, 300, 300, 201), 4, 64, .15, [.1, .2, .3, .4], .5)
+    base_ = FractalNet((3, 300, 300, 1), 4, 64, .15, [.1, .2, .3, .4], .5)
     base_.layers[-3].padding = 1
     extras_ = []
     for i, (in_channels, out_channels, intermid_channels) in enumerate(zip(channels[:-1], channels[1:], [256, 256, 128, 128, 128])):
