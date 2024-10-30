@@ -15,10 +15,16 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision.datasets import CocoDetection as TvCocoDetection, wrap_dataset_for_transforms_v2
 from torchvision.transforms import v2 as transforms
 from dataset import CocoWrapperDataset
+from tqdm import tqdm
+from torch.optim.lr_scheduler import MultiStepLR
 
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
+
+
+def parse_array(s: str) -> list[int]:
+    return [int(x) for x in s.split(",")]
 
 
 parser = argparse.ArgumentParser(
@@ -68,6 +74,7 @@ parser.add_argument(
 )
 parser.add_argument("--model", default="vgg", choices=["vgg", "fractalnet"], type=str, help="vgg or fractalnet backbone")
 parser.add_argument("--comment", type=str, help="TensorBoard comment for run")
+parser.add_argument("--lr_schedule", type=parse_array, help="LR Scheduler steps", default=[])
 args = parser.parse_args()
 
 
@@ -158,17 +165,12 @@ def train():
         cfg["num_classes"], 0.5, True, 0, True, 3, 0.5, False, device
     ).to(device)
 
-    net.train()
-    # loss counters
-    loc_loss = 0
-    conf_loss = 0
     print("Loading the dataset...")
 
     print("Training SSD on:", dataset.name)
     print("Using the specified args:")
     print(args)
 
-    step_index = 0
     global_iteration = 0
 
     data_loader = data.DataLoader(
@@ -179,60 +181,50 @@ def train():
         collate_fn=detection_collate,
         # pin_memory=True,
     )
+
+    scheduler = MultiStepLR(
+        optimizer,
+        args.lr_schedule,
+        0.1,
+    )
     # create batch iterator
     # images, targets = next(iter(data_loader))
-    for epoch in range(args.num_epochs):
-        for iteration, (images, targets) in enumerate(data_loader):
-        # for iteration in range(1):
-            if iteration in cfg["lr_steps"]:
-                step_index += 1
-                adjust_learning_rate(optimizer, args.gamma, step_index)
+    for epoch in tqdm(
+        range(args.num_epochs), desc="epochs", position=0
+    ):
+        net.train()
+        running_loss = 0
+        with tqdm(
+            enumerate(data_loader),
+            desc="iterations",
+            position=1,
+            leave=False,
+            total=len(data_loader),
+        ) as pbatch:
+            for iteration, (images, targets) in pbatch:
+            # for iteration in range(1):
+                images = images.to(device)
+                targets = [target.to(device) for target in targets]
 
-            images = images.to(device)
-            targets = [target.to(device) for target in targets]
+                # forward
+                out = net(images)
+                # backprop
+                optimizer.zero_grad()
+                loss_l, loss_c = criterion(out, targets)
+                loss = loss_l + loss_c
+                loss.backward()
+                optimizer.step()
 
-            # forward
-            t0 = time.time()
-            out = net(images)
-            # backprop
-            optimizer.zero_grad()
-            loss_l, loss_c = criterion(out, targets)
-            loss = loss_l + loss_c
-            loss.backward()
-            optimizer.step()
-            t1 = time.time()
-            loc_loss += loss_l.item()
-            conf_loss += loss_c.item()
+                writer.add_scalar("ImmediateLoss/train", loss.item(), global_step=global_iteration)
+                global_iteration += 1
+                pbatch.set_postfix(loss=loss.item())
 
-            writer.add_scalar("Loss/train", loss.item(), global_step=global_iteration)
+        epoch_loss = running_loss / iteration + 1
+        writer.add_scalar("Loss/train", epoch_loss, global_iteration)
 
-            if iteration % 10 == 0:
-                print("timer: %.4f sec." % (t1 - t0))
-                print(
-                    "iter " + repr(iteration) + " || Loss: %.4f ||" % (loss.item()),
-                    end=" ",
-                )
+        scheduler.step()
 
-            if iteration != 0 and iteration % 5000 == 0:
-                print("Saving state, iter:", iteration)
-                torch.save(
-                    ssd_net.state_dict(),
-                    "weights/ssd300_COCO_" + repr(iteration) + ".pth",
-                )
-
-            global_iteration += 1
-    torch.save(ssd_net.state_dict(), args.save_folder + "" + args.dataset + ".pth")
-
-
-def adjust_learning_rate(optimizer, gamma, step):
-    """Sets the learning rate to the initial LR decayed by 10 at every
-        specified step
-    # Adapted from PyTorch Imagenet example:
-    # https://github.com/pytorch/examples/blob/master/imagenet/main.py
-    """
-    lr = args.lr * (gamma ** (step))
-    for param_group in optimizer.param_groups:
-        param_group["lr"] = lr
+    torch.save(ssd_net.state_dict(), os.path.join(args.save_folder, f'{args.comment}.pth'))
 
 
 def xavier(param):
