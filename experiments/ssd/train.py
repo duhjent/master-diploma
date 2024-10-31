@@ -223,7 +223,7 @@ def train():
                 running_loss += loss.item()
 
         epoch_loss = running_loss / (iteration + 1)
-        writer.add_scalar("Loss/train", epoch_loss, global_iteration)
+        writer.add_scalar("Loss/train", epoch_loss, epoch)
 
         scheduler.step()
 
