@@ -1,7 +1,7 @@
 from experiments.ssd.data import *
 from experiments.ssd.utils.augmentations import SSDAugmentation
 from experiments.ssd.layers.modules import MultiBoxLoss
-from experiments.ssd.ssd import build_ssd, build_ssd_fractal
+from experiments.ssd.ssd import build_ssd, build_ssd_fractal, build_ssd_resnet
 import os
 import time
 import torch
@@ -72,7 +72,7 @@ parser.add_argument("--gamma", default=0.1, type=float, help="Gamma update for S
 parser.add_argument(
     "--save_folder", default="weights/", help="Directory for saving checkpoint models"
 )
-parser.add_argument("--model", default="vgg", choices=["vgg", "fractalnet"], type=str, help="vgg or fractalnet backbone")
+parser.add_argument("--model", default="vgg", choices=["vgg", "fractalnet", "resnet"], type=str, help="vgg, fractalnet or resnet backbone")
 parser.add_argument("--comment", type=str, help="TensorBoard comment for run")
 parser.add_argument("--lr_schedule", type=parse_array, help="LR Scheduler steps", default=[])
 args = parser.parse_args()
@@ -132,6 +132,8 @@ def train():
         ssd_net = build_ssd("train", cfg, cfg["min_dim"], cfg["num_classes"])
     elif args.model == 'fractalnet':
         ssd_net = build_ssd_fractal("train", cfg, cfg["min_dim"], cfg["num_classes"])
+    elif args.model == 'resnet':
+        ssd_net = build_ssd_resnet("train", cfg, cfg["min_dim"], cfg["num_classes"])
     net = ssd_net
 
     if args.cuda:
@@ -216,10 +218,11 @@ def train():
                 optimizer.step()
 
                 writer.add_scalar("ImmediateLoss/train", loss.item(), global_step=global_iteration)
-                global_iteration += 1
                 pbatch.set_postfix(loss=loss.item())
+                global_iteration += 1
+                running_loss += loss.item()
 
-        epoch_loss = running_loss / iteration + 1
+        epoch_loss = running_loss / (iteration + 1)
         writer.add_scalar("Loss/train", epoch_loss, global_iteration)
 
         scheduler.step()
