@@ -449,12 +449,12 @@ def build_ssd_fractal(phase, cfg, size=300, num_classes=21):
 
     return SSDFractal(phase, base_, extras_, head_, num_classes, priors)
 
-def build_ssd_resnet(phase, cfg, size=300, num_classes=21):
+def build_ssd_resnet(phase, cfg, size=300, num_classes=21, weights=None):
     assert phase in ('test', 'train'), 'Phase should be either test or train'
     assert size == 300, 'Only size 300 is supported now'
     channels = [256, 512, 512, 256, 256, 128]
 
-    base_ = resnet18()
+    base_ = resnet18(weights)
     extras_ = []
     for i, (in_channels, out_channels, intermid_channels) in enumerate(zip(channels[:-1], channels[1:], [256, 256, 128, 128, 128])):
         if i < 3:

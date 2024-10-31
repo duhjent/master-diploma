@@ -75,6 +75,7 @@ parser.add_argument(
 parser.add_argument("--model", default="vgg", choices=["vgg", "fractalnet", "resnet"], type=str, help="vgg, fractalnet or resnet backbone")
 parser.add_argument("--comment", type=str, help="TensorBoard comment for run")
 parser.add_argument("--lr_schedule", type=parse_array, help="LR Scheduler steps", default=[])
+parser.add_argument("--resnet_weights", type=str, help="ResNet-18 weights to use", default=None)
 args = parser.parse_args()
 
 
@@ -133,7 +134,7 @@ def train():
     elif args.model == 'fractalnet':
         ssd_net = build_ssd_fractal("train", cfg, cfg["min_dim"], cfg["num_classes"])
     elif args.model == 'resnet':
-        ssd_net = build_ssd_resnet("train", cfg, cfg["min_dim"], cfg["num_classes"])
+        ssd_net = build_ssd_resnet("train", cfg, cfg["min_dim"], cfg["num_classes"], args.resnet_weights)
     net = ssd_net
 
     if args.cuda:
