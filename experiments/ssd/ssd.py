@@ -87,7 +87,7 @@ class SSDFractal(nn.Module):
                 loc.view(loc.size(0), -1, 4),                   # loc preds
                 self.softmax(conf.view(conf.size(0), -1,
                              self.num_classes)),                # conf preds
-                self.priors.type(type(x.data))                  # default boxes
+                self.priors
             )
         else:
             output = (
@@ -190,7 +190,7 @@ class SSDResNet(nn.Module):
                 loc.view(loc.size(0), -1, 4),                   # loc preds
                 self.softmax(conf.view(conf.size(0), -1,
                              self.num_classes)),                # conf preds
-                self.priors.type(type(x.data))                  # default boxes
+                self.priors
             )
         else:
             output = (
@@ -301,7 +301,7 @@ class SSDVGG(nn.Module):
                 loc.view(loc.size(0), -1, 4),                   # loc preds
                 self.softmax(conf.view(conf.size(0), -1,
                              self.num_classes)),                # conf preds
-                self.priors.type(type(x.data))                  # default boxes
+                self.priors
             )
         else:
             output = (

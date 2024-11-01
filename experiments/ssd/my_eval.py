@@ -105,9 +105,9 @@ def main():
             img = img.to(device)
             detections = model(img)
             outs = []
-            # scale each detection back up to the image
-            scale = torch.tensor([300, 300, 300, 300])
             for img_idx in range(img.size(0)):
+                img = dataset._dataset.coco.imgs[tgt[img_idx]['image_id']]
+                scale = torch.tensor([img['width'], img['height'], img['width'], img['height']])
                 for i in range(detections.size(1)):
                     j = 0
                     while detections[img_idx, i, j, 0] >= args.conf_threshold:
