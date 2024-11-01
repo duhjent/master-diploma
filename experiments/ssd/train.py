@@ -17,6 +17,7 @@ from torchvision.transforms import v2 as transforms
 from dataset import CocoWrapperDataset
 from tqdm import tqdm
 from torch.optim.lr_scheduler import MultiStepLR
+from torch.utils.data import random_split
 
 
 def str2bool(v):
@@ -125,6 +126,8 @@ def train():
         ), target_keys=('boxes', 'labels')))
         cfg = dfg
 
+    train_ds, val_ds = random_split(dataset, [.8, .2], torch.Generator().manual_seed(42))
+
     writer = SummaryWriter(comment=args.comment)
 
     device = "cuda" if args.cuda else "cpu"
@@ -177,12 +180,18 @@ def train():
     global_iteration = 0
 
     data_loader = data.DataLoader(
-        dataset,
+        train_ds,
         args.batch_size,
         num_workers=args.num_workers,
         shuffle=True,
         collate_fn=detection_collate,
-        # pin_memory=True,
+    )
+
+    val_data_loader = data.DataLoader(
+        val_ds,
+        args.batch_size,
+        num_workers=args.num_workers,
+        collate_fn=detection_collate,
     )
 
     scheduler = MultiStepLR(
@@ -191,10 +200,10 @@ def train():
         0.1,
     )
     # create batch iterator
-    # images, targets = next(iter(data_loader))
     for epoch in tqdm(
         range(args.num_epochs), desc="epochs", position=0
     ):
+        images, targets = next(iter(data_loader))
         net.train()
         running_loss = 0
         with tqdm(
@@ -204,8 +213,8 @@ def train():
             leave=False,
             total=len(data_loader),
         ) as pbatch:
-            for iteration, (images, targets) in pbatch:
-            # for iteration in range(1):
+            # for iteration, (images, targets) in pbatch:
+            for iteration in range(1):
                 images = images.to(device)
                 targets = [target.to(device) for target in targets]
 
@@ -225,6 +234,25 @@ def train():
 
         epoch_loss = running_loss / (iteration + 1)
         writer.add_scalar("Loss/train", epoch_loss, epoch)
+
+        net.eval()
+        running_loss = 0
+        with torch.no_grad():
+            images, targets = next(iter(val_data_loader))
+            for iteration in range(1):
+            # for iteration, (images, targets) in enumerate(val_data_loader):
+                images = images.to(device)
+                targets = [target.to(device) for target in targets]
+
+                # forward
+                out = net(images)
+                # backprop
+                loss_l, loss_c = criterion(out, targets)
+                loss = loss_l + loss_c
+                running_loss += loss.item()
+
+        val_loss = running_loss / (iteration + 1)
+        writer.add_scalar("Loss/val", val_loss, epoch)
 
         scheduler.step()
 
