@@ -26,6 +26,19 @@
             "module": "experiments.initial.debug_fractal"
         },
         {
+            "name": "Debug eval",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.ssd.my_eval",
+            "args": [
+                "--model=resnet",
+                "--cuda=False",
+                "--weights=./weights/ssd_resnet_80epochs.pth",
+                "--dataset_root=./data/dfg/",
+                "--batch_size=2"
+            ]
+        },
+        {
             "name": "Debug classification metrics",
             "type": "debugpy",
             "request": "launch",

@@ -144,9 +144,8 @@ class SSDResNet(nn.Module):
         self.loc = nn.ModuleList(head[0])
         self.conf = nn.ModuleList(head[1])
 
-        if phase == 'test':
-            self.softmax = nn.Softmax(dim=-1)
-            self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
+        self.softmax = nn.Softmax(dim=-1)
+        self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
 
     def forward(self, x):
         """Applies network layers and ops on input image(s) x.
@@ -454,7 +453,7 @@ def build_ssd_resnet(phase, cfg, size=300, num_classes=21, weights=None):
     assert size == 300, 'Only size 300 is supported now'
     channels = [256, 512, 512, 256, 256, 128]
 
-    base_ = resnet18(weights)
+    base_ = resnet18(weights=weights)
     extras_ = []
     for i, (in_channels, out_channels, intermid_channels) in enumerate(zip(channels[:-1], channels[1:], [256, 256, 128, 128, 128])):
         if i < 3:
