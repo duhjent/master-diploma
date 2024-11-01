@@ -47,7 +47,12 @@ parser.add_argument(
 parser.add_argument(
     "--weights", default=None, required=True, type=str, help="Weight file to load"
 )
-parser.add_argument("--conf_threshold", default=0.5, type=float, help="Confidence threshold to for detections to count into the results")
+parser.add_argument(
+    "--conf_threshold",
+    default=0.5,
+    type=float,
+    help="Confidence threshold to for detections to count into the results",
+)
 
 args = parser.parse_args()
 
@@ -106,8 +111,16 @@ def main():
             detections = model(img)
             outs = []
             for img_idx in range(img.size(0)):
-                img = dataset._dataset.coco.imgs[tgt[img_idx]['image_id']]
-                scale = torch.tensor([img['width'], img['height'], img['width'], img['height']])
+                coco_img = dataset._dataset.coco.imgs[tgt[img_idx]["image_id"]]
+                scale = torch.tensor(
+                    [
+                        coco_img["width"],
+                        coco_img["height"],
+                        coco_img["width"],
+                        coco_img["height"],
+                    ],
+                    device=device,
+                )
                 for i in range(detections.size(1)):
                     j = 0
                     while detections[img_idx, i, j, 0] >= args.conf_threshold:
