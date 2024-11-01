@@ -53,6 +53,9 @@ parser.add_argument(
     type=float,
     help="Confidence threshold to for detections to count into the results",
 )
+parser.add_argument(
+    "--deepest", default=False, type=str2bool, help="Use deepest column only for FractalNet"
+)
 
 args = parser.parse_args()
 
@@ -108,7 +111,10 @@ def main():
         for img, tgt in tqdm(loader):
             # img, tgt = next(iterator)
             img = img.to(device)
-            detections = model(img)
+            if model == "fractalnet":
+                detections = model(img, deepest=args.deepest)
+            else:
+                detections = model(img)
             outs = []
             for img_idx in range(img.size(0)):
                 coco_img = dataset._dataset.coco.imgs[tgt[img_idx]["image_id"]]
