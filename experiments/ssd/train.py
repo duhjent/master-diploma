@@ -203,7 +203,7 @@ def train():
     for epoch in tqdm(
         range(args.num_epochs), desc="epochs", position=0
     ):
-        images, targets = next(iter(data_loader))
+        # images, targets = next(iter(data_loader))
         net.train()
         running_loss = 0
         with tqdm(
@@ -213,8 +213,8 @@ def train():
             leave=False,
             total=len(data_loader),
         ) as pbatch:
-            # for iteration, (images, targets) in pbatch:
-            for iteration in range(1):
+            for iteration, (images, targets) in pbatch:
+            # for iteration in range(1):
                 images = images.to(device)
                 targets = [target.to(device) for target in targets]
 
@@ -238,9 +238,9 @@ def train():
         net.eval()
         running_loss = 0
         with torch.no_grad():
-            images, targets = next(iter(val_data_loader))
-            for iteration in range(1):
-            # for iteration, (images, targets) in enumerate(val_data_loader):
+            # images, targets = next(iter(val_data_loader))
+            # for iteration in range(1):
+            for iteration, (images, targets) in enumerate(val_data_loader):
                 images = images.to(device)
                 targets = [target.to(device) for target in targets]
 
