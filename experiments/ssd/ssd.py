@@ -44,7 +44,7 @@ class SSDFractal(nn.Module):
             self.softmax = nn.Softmax(dim=-1)
             self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
 
-    def forward(self, x):
+    def forward(self, x, deepest=False):
         """Applies network layers and ops on input image(s) x.
 
         Args:
@@ -67,7 +67,7 @@ class SSDFractal(nn.Module):
         loc = list()
         conf = list()
 
-        x = self.fractalnet(x, features_only=True)
+        x = self.fractalnet(x, deepest=deepest, features_only=True)
         sources.append(x)
 
         # apply extra layers and cache source layer outputs
